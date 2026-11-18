@@ -1,0 +1,37 @@
+
+name: Build METAPHYSICAL VST3
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Configure project
+        run: cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DJUCE_BUILD_EXAMPLES=OFF -DJUCE_BUILD_EXTRAS=OFF
+
+      - name: Build VST3
+        run: cmake --build build --config Release --target METAPHYSICAL_VST3 -j 3
+
+      - name: Package DMG
+        run: |
+          mkdir -p package
+          cp -R build/METAPHYSICAL_artefacts/Release/VST3/METAPHYSICAL.vst3 package/
+          hdiutil create -volname METAPHYSICAL -srcfolder package -ov -format UDZO METAPHYSICAL-macOS.dmg
+
+      - name: Upload plugin and installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: METAPHYSICAL-macOS
+          path: |
+            METAPHYSICAL-macOS.dmg
+            package/METAPHYSICAL.vst3
