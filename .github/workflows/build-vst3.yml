@@ -22,6 +22,21 @@ jobs:
       - name: Build VST3
         run: cmake --build build --config Release --target METAPHYSICAL_VST3 -j 3
 
+      - name: Fix VST3 metadata JSON
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          import re
+
+          p = Path("build/METAPHYSICAL_artefacts/Release/VST3/METAPHYSICAL.vst3/Contents/Resources/moduleinfo.json")
+          data = p.read_text()
+          data = re.sub(r",(\s*[}\]])", r"\1", data)
+          parsed = json.loads(data)
+          p.write_text(json.dumps(parsed, indent=2) + "\n")
+          print("VST3 metadata JSON validated and fixed.")
+          PY
+
       - name: Package DMG
         run: |
           mkdir -p package
